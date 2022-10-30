@@ -6,6 +6,7 @@ using UnityEngine.Tilemaps;
 
 public class SendingTilmap : NetworkBehaviour
 {
+
     [SerializeField] private Tile[] tiles;
     [SerializeField] private Tilemap map;
     List<Vector2Int> lodedTiled = new List<Vector2Int>();
@@ -29,7 +30,7 @@ public class SendingTilmap : NetworkBehaviour
             if (!start)
                 clientStart();
         }
-        
+
         if (IsServer)
         {
             if (!start)
@@ -45,17 +46,36 @@ public class SendingTilmap : NetworkBehaviour
     private void serverStart()
     {
         start = true;
-        Debug.Log("startTileGen");
         genIland();
     }
 
     private void genIland()
     {
-        newTile(new Vector2Int(0, -3), tiles[0]);
-        newTile(new Vector2Int(-1, -3), tiles[0]);
-        newTile(new Vector2Int(1, -3), tiles[0]);
-        newTile(new Vector2Int(-2, -3), tiles[0]);
-        newTile(new Vector2Int(2, -3), tiles[0]);
+        for (int x = 0; x < 20; x++)
+        {
+            for (int y = 0; y < 10; y++)
+            {
+                newTile(new Vector2Int(x - 10, y - 10), tiles[0]);
+            }
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void newTileServerRpc(Vector2Int pos, int material)
+    {
+        if (IsServer)
+        {
+            newTile(pos, tiles[material]);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void removeTileServerRpc(Vector2Int pos)
+    {
+        if (IsServer)
+        {
+            removeTile(pos);
+        }
     }
 
     public void newTile(Vector2Int pos, Tile material)
@@ -78,9 +98,9 @@ public class SendingTilmap : NetworkBehaviour
     {
         int id = 0;
         int i = 0;
-        foreach(Tile tile in tiles)
+        foreach (Tile tile in tiles)
         {
-            if(tile == map.GetTile(new Vector3Int(pos.x, pos.y, 0)))
+            if (tile == map.GetTile(new Vector3Int(pos.x, pos.y, 0)))
             {
                 id = i;
             }
@@ -123,7 +143,6 @@ public class SendingTilmap : NetworkBehaviour
             return;
         if (!IsHost)
         {
-            Debug.Log("wow");
             if (id != 0)
                 newTile(pos, tiles[id - 1]);
             else
@@ -136,14 +155,12 @@ public class SendingTilmap : NetworkBehaviour
     {
         if (IsServer)
         {
-            Debug.Log(OwnerClientId);
             SendAllToPlayer(pid);
         }
     }
 
     private void SendAllToPlayer(ulong pid)
     {
-        Debug.Log("player : " + pid);
         foreach (Vector2Int pos in lodedTiled)
         {
             sendTilemapto(pos, pid);
@@ -159,9 +176,8 @@ public class SendingTilmap : NetworkBehaviour
 
     private void clientStart()
     {
-        Debug.Log("hi");
         newPlServerRpc(OwnerClientId);
-        if(!IsHost)
+        if (!IsHost)
             start = true;
     }
 }
