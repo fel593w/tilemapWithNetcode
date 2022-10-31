@@ -92,6 +92,10 @@ public class SendingTilmap : NetworkBehaviour
     {
         map.SetTile(new Vector3Int(pos.x, pos.y, 0), null);
         lodedTiled.Remove(pos);
+        if (IsServer)
+        {
+            sendTilemap(pos);
+        }
     }
 
     private void sendTilemap(Vector2Int pos)
